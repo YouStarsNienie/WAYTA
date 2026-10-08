@@ -3,21 +3,30 @@ name: Build APK
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch: # 支持在 Actions 页面手动点击按钮触发构建
 
 jobs:
   build-android:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Extract Source Code
         run: |
-          # 解压压缩包，并把里面的一层 WAYTA 文件夹内容挪到根目录
+          echo "开始解压压缩包..."
           unzip WAYTA.zip
           if [ -d "WAYTA" ]; then mv WAYTA/* . ; rm -rf WAYTA; fi
-          # 确认关键文件在根目录
+          echo "解压完成，当前目录文件列表："
           ls -la
-          echo "检查必要文件:"
+          
+          # ★ 核心修复：自动接受 Android SDK 许可协议，避免构建中途退出
+          echo "android.accept_sdk_license = True" >> buildozer.spec
+          echo "已注入许可配置，检查 buildozer.spec 末尾："
+          tail -n 5 buildozer.spec
+          
+          echo "检查必要文件是否存在："
           ls qidong.py buildozer.spec
 
       - name: Set up Python
